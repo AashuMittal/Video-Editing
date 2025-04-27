@@ -1,6 +1,6 @@
 const express = require('express')
 const sequalizeDb = require('../sequalizedb')
-const Uploadvideo=require('../Model/Uploadvideo');
+const Uploadvideo = require('../Model/Uploadvideo');
 const { saveFile } = require('../Service/fileUploadService');
 const path = require('path');
 
@@ -8,10 +8,10 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath)
 
-exports.Videoupload=async(req,res)=>{
-const {video_name,duration,size,status}=req.body;
+exports.Videoupload = async (req, res) => {
+  const { video_name, duration, size, status } = req.body;
 
-  
+
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
@@ -22,18 +22,18 @@ const {video_name,duration,size,status}=req.body;
   }
   const directory = 'uploads';
   const uploadDir = path.join(__dirname, '..', directory);
-  const filePath =  await saveFile(uploadedFile, uploadDir);
+  const filePath = await saveFile(uploadedFile, uploadDir);
   const relativePath = path.join(directory, video_name);
-const video=await Uploadvideo.create({video_name,duration,size,status,path:relativePath});
-try{
-if(video){
- return res.status(200).send({messsage:"Successfully upload",video});
-}
-return res.status(500).send({messsage:"something went wrong"});
-}
-catch(error){
-  return res.status(500).send({messsage:"error"});
-}
+  const video = await Uploadvideo.create({ video_name, duration, size, status, path: relativePath });
+  try {
+    if (video) {
+      return res.status(200).send({ messsage: "Successfully upload", video });
+    }
+    return res.status(500).send({ messsage: "something went wrong" });
+  }
+  catch (error) {
+    return res.status(500).send({ messsage: "error" });
+  }
 }
 
 exports.Videotrim = async (req, res) => {
@@ -48,37 +48,37 @@ exports.Videotrim = async (req, res) => {
 
 
     const inputPath = findvideo.path;
-    const inputname=findvideo.video_name;
+    const inputname = findvideo.video_name;
     const directory = 'trim_video';
     const uploadDir = path.join(__dirname, '..', directory);
     const outputFilePath = path.join(uploadDir, inputname);
-    const relativeOutputPath = path.join(directory,inputname); 
+    const relativeOutputPath = path.join(directory, inputname);
 
     const start = Start ?? 0;
     const end = End ?? 0;
-    const ff=ffmpeg(inputPath)
-    if(start!=null){
+    const ff = ffmpeg(inputPath)
+    if (start != null) {
       ff.setDuration(start)
     }
-    if(end!=null){
-      ff.setDuration(end-start)
+    if (end != null) {
+      ff.setDuration(end - start)
     }
-      ff.output(outputFilePath)
-  
-      ff.on('end', async () => {
-        console.log('Conversion Done ✅');
+    ff.output(outputFilePath)
 
-        const updatetrimvideo = await Uploadvideo.update(
-          { duration: end-start, path: relativeOutputPath },
-          { where: { id } }
-        );
+    ff.on('end', async () => {
+      console.log('Conversion Done ✅');
 
-        if (updatetrimvideo) {
-          res.status(200).send({ message: "Successfully updated", path: relativeOutputPath });
-        } else {
-          res.status(500).send({ message: "Error updating database" });
-        }
-      })
+      const updatetrimvideo = await Uploadvideo.update(
+        { duration: end - start, path: relativeOutputPath },
+        { where: { id } }
+      );
+
+      if (updatetrimvideo) {
+        res.status(200).send({ message: "Successfully updated", path: relativeOutputPath });
+      } else {
+        res.status(500).send({ message: "Error updating database" });
+      }
+    })
       .on('error', (err) => {
         console.error('Error during ffmpeg processing:', err);
         res.status(500).send({ message: "Error processing video" });
@@ -93,7 +93,7 @@ exports.Videotrim = async (req, res) => {
 
 exports.Videosubtitles = async (req, res) => {
   try {
-    const {  subtitleText, Start,End } = req.body;
+    const { subtitleText, Start, End } = req.body;
     const id = req.params.id;
 
     const findvideo = await Uploadvideo.findOne({ where: { id } });
@@ -106,7 +106,7 @@ exports.Videosubtitles = async (req, res) => {
     const directory = 'subtitle_trim_video';
     const uploadDir = path.join(__dirname, '..', directory);
     const outputFilePath = path.join(uploadDir, inputname);
-    const relativeOutputPath = path.join(directory, inputname); 
+    const relativeOutputPath = path.join(directory, inputname);
 
     const start = Start ?? 0;
     const end = End ?? 0;
@@ -169,12 +169,12 @@ exports.Videorender = async (req, res) => {
       return res.status(400).send({ message: "Video not found" });
     }
 
-    const inputPath = path.join(__dirname, '..', findVideo.path); 
+    const inputPath = path.join(__dirname, '..', findVideo.path);
     const inputName = findVideo.video_name;
-    const directory= 'rendered_videos';
+    const directory = 'rendered_videos';
     const uploadDir = path.join(__dirname, '..', directory);
     const outputFilePath = path.join(uploadDir, inputName);
-    const relativeOutputPath = path.join(directory,inputName);
+    const relativeOutputPath = path.join(directory, inputName);
     const ff = ffmpeg(inputPath);
     ff.output(outputFilePath)
       .on('end', async () => {
@@ -203,17 +203,17 @@ exports.Videorender = async (req, res) => {
   }
 };
 
-exports.VideoGet=async(req,res)=>{
-  const id=req.params.id;
-  const getvideo=await Uploadvideo.findOne({where:{id}});
-  const filePath = path.join(__dirname, '..',getvideo.path);
+exports.VideoGet = async (req, res) => {
+  const id = req.params.id;
+  const getvideo = await Uploadvideo.findOne({ where: { id } });
+  const filePath = path.join(__dirname, '..', getvideo.path);
 
-  console.log('ss',filePath)
-  if(filePath){
+  console.log('ss', filePath)
+  if (filePath) {
     return res.download(filePath);
   }
-  else{
-    return res.status(500).send({message:"error"});
+  else {
+    return res.status(500).send({ message: "error" });
   }
 }
 
